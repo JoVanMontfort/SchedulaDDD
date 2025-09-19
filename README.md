@@ -1,8 +1,9 @@
-# Simple HTTP Server Framework
+# DDD Scheduler Framework
 
-## A Practical Domain-Driven Design Demonstration
+## A Practical Domain-Driven Design with Compile-Time Scheduling
 
-This project showcases a modern, reflection-free Java application framework built with Domain-Driven Design (DDD) principles. It demonstrates how to create a Spring Boot-like development experience without runtime reflection or external framework dependencies.
+This project showcases a modern, reflection-free Java application framework built with Domain-Driven Design (DDD) principles. \
+It demonstrates how to create a Spring Boot-like development experience with advanced scheduling capabilities, all without runtime reflection or external framework dependencies.
 
 ## 🚀 Key Features
 
@@ -11,7 +12,16 @@ This project showcases a modern, reflection-free Java application framework buil
 - **Modular Design**: Independent domains for templating, web serving, JSON processing, and dependency injection
 - **Compile-Time Optimization**: All code generation happens during compilation, eliminating runtime overhead
 - **Modernization Blueprint**: Practical example for legacy modernization and greenfield projects
+- **Compile-Time Scheduling**: Annotation-based task scheduling with no runtime overhead
 
+## 🆕 New Scheduling Capabilities
+
+- The framework now includes a powerful scheduling module that provides Spring Boot-like @Scheduled functionality through annotation processing:
+- Annotation-Based Scheduling: @Scheduled and @EnableScheduling annotations
+- Multiple Scheduling Strategies: Support for cron expressions, fixed rates, and fixed delays
+- Compile-Time Generation: All scheduler code generated during compilation
+- Production Ready: Includes proper error handling, logging, and resource management
+- Lifecycle Management: Automatic initialization and shutdown hooks
 
 ## 🏗️ Architecture Overview
 
@@ -21,6 +31,7 @@ The framework is organized into core domains:
 - **WebServing**: HTTP request handling and routing logic
 - **Json**: Efficient serialization/deserialization utilities
 - **Injector**: Dependency injection framework
+- **Scheduler**: Compile-time task scheduling system
 
 Each domain operates as an independent bounded context with clearly defined interfaces and contracts.
 
@@ -71,6 +82,35 @@ Running eventcatalog
 cd ddd-doc
 npm run dev
 ```
+
+---
+
+## 🕐 Using the Scheduler
+
+Create scheduled tasks with simple annotations:
+```java
+@EnableScheduling
+public class OrderManagementService {
+    
+    @Scheduled(fixedRate = 30000)
+    public void processPendingOrders() {
+        // Domain logic executed every 30 seconds
+    }
+    
+    @Scheduled(cron = "0 0 2 * * *")
+    public void generateDailyReports() {
+        // Nightly report generation
+    }
+    
+    @Scheduled(fixedDelay = 60000, initialDelay = 5000)
+    public void cleanupExpiredSessions() {
+        // Cleanup task with initial delay
+    }
+}
+```
+The annotation processor will automatically generate all necessary scheduling infrastructure during compilation.
+
+---
 
 ## 🤝 Contributing
 
