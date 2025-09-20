@@ -2,6 +2,7 @@ package com.bart.example.infrastructure.scheduler.queries;
 
 import com.bart.example.infrastructure.scheduler.annotations.EnableScheduling;
 import com.bart.example.infrastructure.scheduler.annotations.Scheduled;
+import com.bart.example.infrastructure.scheduler.usecases.ScheduledMethodInfo;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -13,7 +13,7 @@ public class CreateJsonWriterUsecase {
     @Getter
     private final static CreateJsonWriterUsecase instance = new CreateJsonWriterUsecase();
 
-    private static MakeContentJsonWriterCommand makeContentJsonWriterCommand
+    private static final MakeContentJsonWriterCommand makeContentJsonWriterCommand
             = MakeContentJsonWriterCommand.getInstance();
 
     private final WriteClassCommand writeClassCommand

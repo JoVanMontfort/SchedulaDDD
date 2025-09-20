@@ -1,10 +1,8 @@
 package com.bart.example.infrastructure.json.commands;
 
-import com.bart.example.infrastructure.json.queries.FindAllJsonAnnotatedObjectsQuery;
 import com.bart.example.infrastructure.templating.ports.TemplatingPort;
 import com.bart.example.infrastructure.templating.ports.model.JsonBaseClass;
 import com.bart.example.infrastructure.templating.ports.model.JsonClass;
-import com.bart.example.infrastructure.webserving.models.WebConstants;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,7 +25,5 @@ public class CreateJsonWriterCommand {
 
         templatingPort.generateJsonWriter(jsonClass);
     }
-
-
 
 }
