@@ -10,7 +10,7 @@ import java.util.Set;
 
 @SupportedAnnotationTypes({"com.bart.example.infrastructure.json.annotations.JsonObject"})
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
-public class JsonProcessor  extends AbstractProcessor {
+public class JsonProcessor extends AbstractProcessor {
     private final CreateJsonProcessorUsecase createJsonProcessorUsecase = CreateJsonProcessorUsecase.getInstance();
     private Filer filer;
     private Messager messager;
@@ -22,18 +22,17 @@ public class JsonProcessor  extends AbstractProcessor {
         this.messager = processingEnv.getMessager();
     }
 
-        @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-            messager.printMessage(Diagnostic.Kind.NOTE, "🔍 Processing round with annotations: " + annotations.size());
-            if (roundEnv.processingOver() || annotations.isEmpty()) {
-                messager.printMessage(Diagnostic.Kind.NOTE, "X Nothing to see here ");
-                return false;
-            }
-
-            createJsonProcessorUsecase.execute(roundEnv,filer);
-
-            return true;
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        messager.printMessage(Diagnostic.Kind.NOTE, "🔍 Processing round with annotations: " + annotations.size());
+        if (roundEnv.processingOver() || annotations.isEmpty()) {
+            messager.printMessage(Diagnostic.Kind.NOTE, "X Nothing to see here ");
+            return false;
         }
 
+        createJsonProcessorUsecase.execute(roundEnv, filer);
 
+        return true;
     }
+
+}

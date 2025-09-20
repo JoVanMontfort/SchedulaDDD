@@ -27,7 +27,7 @@ public class CreateJsonProcessorUsecase {
     public void execute(RoundEnvironment roundEnv, Filer filer) {
         List<JsonBaseClass> baseClasses = findAllJsonAnnotatedObjectsQuery.execute(roundEnv);
         createJsonWriterCommand.execute(filer, baseClasses);
-        createJsonReaderCommand.execute(filer,baseClasses);
+        createJsonReaderCommand.execute(filer, baseClasses);
     }
 
 }
