@@ -2,7 +2,7 @@ package com.bart.example.infrastructure.scheduler.queries;
 
 import com.bart.example.infrastructure.scheduler.annotations.EnableScheduling;
 import com.bart.example.infrastructure.scheduler.annotations.Scheduled;
-import com.bart.example.infrastructure.scheduler.usecases.ScheduledMethodInfo;
+import com.bart.example.infrastructure.templating.usecases.ScheduledMethodInfo;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,111 +17,130 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FindAllScheduledMethodsQuery {
     @Getter
     private final static FindAllScheduledMethodsQuery instance = new FindAllScheduledMethodsQuery();
 
-    private Elements elementUtils;
     private Types typeUtils;
+    private Elements elementUtils;
 
     public List<ScheduledMethodInfo> execute(RoundEnvironment roundEnv, Messager messager) {
-        List<ScheduledMethodInfo> allMethods = new ArrayList<>();
+        messager.printMessage(Diagnostic.Kind.NOTE, "🔍 Finding all scheduled methods...");
 
-        // Find all classes annotated with @EnableScheduling
-        for (Element element : roundEnv.getElementsAnnotatedWith(EnableScheduling.class)) {
-            if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.INTERFACE) {
-                TypeElement typeElement = (TypeElement) element;
-                if (validateScheduledClass(typeElement, messager)) {
-                    List<ScheduledMethodInfo> classMethods = findScheduledMethodsForClass(typeElement, roundEnv, messager);
-                    allMethods.addAll(classMethods);
-                }
-            }
-        }
+        List<ScheduledMethodInfo> allMethods = roundEnv.getElementsAnnotatedWith(EnableScheduling.class)
+                .stream()
+                .filter(this::isValidClassElement)
+                .map(element -> (TypeElement) element)
+                .filter(classElement -> validateScheduledClass(classElement, messager))
+                .flatMap(classElement -> findScheduledMethodsForClass(classElement, roundEnv, messager).stream())
+                .collect(Collectors.toList());
+
+        messager.printMessage(Diagnostic.Kind.NOTE,
+                "✅ Found " + allMethods.size() + " scheduled methods across " +
+                        roundEnv.getElementsAnnotatedWith(EnableScheduling.class).size() + " classes");
 
         return allMethods;
     }
 
-    private boolean validateScheduledClass(TypeElement classElement, Messager messager) {
-        // Check if class has a no-arg constructor
-        boolean hasNoArgConstructor = classElement.getEnclosedElements().stream()
-                .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
-                .anyMatch(e -> e.getModifiers().contains(Modifier.PUBLIC) &&
-                        ((ExecutableElement) e).getParameters().isEmpty());
+    private boolean isValidClassElement(Element element) {
+        return element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.INTERFACE;
+    }
 
-        if (!hasNoArgConstructor) {
+    private boolean validateScheduledClass(TypeElement classElement, Messager messager) {
+        // Check if class has a no-arg constructor and is not abstract
+        boolean isValid = hasPublicNoArgConstructor(classElement) &&
+                !classElement.getModifiers().contains(Modifier.ABSTRACT);
+
+        if (!isValid) {
             messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Class " + classElement.getSimpleName() + " must have a public no-argument constructor",
+                    String.format("Class %s must be non-abstract and have a public no-argument constructor",
+                            classElement.getSimpleName()),
                     classElement);
-            return false;
         }
 
-        return true;
+        return isValid;
+    }
+
+    private boolean hasPublicNoArgConstructor(TypeElement classElement) {
+        return classElement.getEnclosedElements().stream()
+                .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
+                .map(e -> (ExecutableElement) e)
+                .anyMatch(constructor ->
+                        constructor.getModifiers().contains(Modifier.PUBLIC) &&
+                                constructor.getParameters().isEmpty());
     }
 
     private List<ScheduledMethodInfo> findScheduledMethodsForClass(TypeElement classElement,
                                                                    RoundEnvironment roundEnv,
                                                                    Messager messager) {
-        List<ScheduledMethodInfo> methods = new ArrayList<>();
+        return roundEnv.getElementsAnnotatedWith(Scheduled.class)
+                .stream()
+                .filter(element -> element.getKind() == ElementKind.METHOD)
+                .filter(element -> element.getEnclosingElement().equals(classElement))
+                .map(element -> (ExecutableElement) element)
+                .filter(methodElement -> validateScheduledMethod(methodElement, messager))
+                .map(methodElement -> createScheduledMethodInfo(classElement, methodElement))
+                .collect(Collectors.toList());
+    }
 
-        for (Element element : roundEnv.getElementsAnnotatedWith(Scheduled.class)) {
-            if (element.getKind() == ElementKind.METHOD &&
-                    element.getEnclosingElement().equals(classElement)) {
+    private ScheduledMethodInfo createScheduledMethodInfo(TypeElement classElement, ExecutableElement methodElement) {
+        Scheduled scheduled = methodElement.getAnnotation(Scheduled.class);
+        return new ScheduledMethodInfo(
+                classElement,
+                methodElement.getSimpleName().toString(),
+                scheduled,
+                methodElement.getParameters().isEmpty(),
+                getMethodQualifiedName(methodElement)
+        );
+    }
 
-                ExecutableElement methodElement = (ExecutableElement) element;
-                Scheduled scheduled = methodElement.getAnnotation(Scheduled.class);
-
-                // Validate method signature
-                if (validateScheduledMethod(methodElement, messager)) {
-                    methods.add(new ScheduledMethodInfo(
-                            classElement,
-                            methodElement.getSimpleName().toString(),
-                            scheduled,
-                            methodElement.getParameters().isEmpty()
-                    ));
-                }
-            }
-        }
-
-        return methods;
+    private String getMethodQualifiedName(ExecutableElement methodElement) {
+        TypeElement enclosingClass = (TypeElement) methodElement.getEnclosingElement();
+        return String.format("%s.%s",
+                elementUtils.getPackageOf(enclosingClass).getQualifiedName(),
+                methodElement.getSimpleName());
     }
 
     private boolean validateScheduledMethod(ExecutableElement methodElement, Messager messager) {
-        // Check if method is public
+        List<String> errors = new ArrayList<>();
+
         if (!methodElement.getModifiers().contains(Modifier.PUBLIC)) {
-            messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Scheduled method must be public: " + methodElement.getSimpleName(),
-                    methodElement);
-            return false;
+            errors.add("must be public");
         }
 
-        // Check if method has parameters (should not)
         if (!methodElement.getParameters().isEmpty()) {
-            messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Scheduled method cannot have parameters: " + methodElement.getSimpleName(),
-                    methodElement);
-            return false;
+            errors.add("cannot have parameters");
         }
 
-        // Check if method returns void
-        TypeMirror returnType = methodElement.getReturnType();
-        TypeMirror voidType = typeUtils.getNoType(TypeKind.VOID);
-        if (!typeUtils.isSameType(returnType, voidType)) {
-            messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Scheduled method must return void: " + methodElement.getSimpleName(),
-                    methodElement);
+        if (!returnsVoid(methodElement)) {
+            errors.add("must return void");
+        }
+
+        if (!errors.isEmpty()) {
+            String errorMessage = String.format("Scheduled method %s %s",
+                    methodElement.getSimpleName(),
+                    String.join(", ", errors));
+            messager.printMessage(Diagnostic.Kind.ERROR, errorMessage, methodElement);
             return false;
         }
 
         return true;
     }
 
-    public void setElementUtils(Elements elementUtils) {
-        this.elementUtils = elementUtils;
+    private boolean returnsVoid(ExecutableElement methodElement) {
+        TypeMirror returnType = methodElement.getReturnType();
+        TypeMirror voidType = typeUtils.getNoType(TypeKind.VOID);
+        return typeUtils.isSameType(returnType, voidType);
     }
 
     public void setTypeUtils(Types typeUtils) {
         this.typeUtils = typeUtils;
+    }
+
+    public void setElementUtils(Elements elementUtils) {
+        this.elementUtils = elementUtils;
     }
 }

@@ -1,6 +1,7 @@
-package com.bart.example.infrastructure.scheduler.commands;
+package com.bart.example.infrastructure.templating.commands;
 
 import com.bart.example.infrastructure.scheduler.model.SchedulerClass;
+import com.bart.example.infrastructure.templating.usecases.ScheduledMethodInfo;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -111,7 +112,7 @@ public class MakeSchedulerContentCommand {
         return content.toString();
     }
 
-    private void generateScheduledTask(StringBuilder content, com.bart.example.infrastructure.scheduler.usecases.ScheduledMethodInfo method) {
+    private void generateScheduledTask(StringBuilder content, ScheduledMethodInfo method) {
         String methodName = method.methodName();
         var scheduled = method.scheduledAnnotation();
 

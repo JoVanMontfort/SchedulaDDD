@@ -1,6 +1,6 @@
 package com.bart.example.infrastructure.scheduler.model;
 
-import com.bart.example.infrastructure.scheduler.usecases.ScheduledMethodInfo;
+import com.bart.example.infrastructure.templating.usecases.ScheduledMethodInfo;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.TypeElement;

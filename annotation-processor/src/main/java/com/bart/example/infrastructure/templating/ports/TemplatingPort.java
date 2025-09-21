@@ -1,7 +1,7 @@
 package com.bart.example.infrastructure.templating.ports;
 
 import com.bart.example.infrastructure.scheduler.model.SchedulerClass;
-import com.bart.example.infrastructure.scheduler.usecases.CreateSchedulerProcessorUsecase;
+import com.bart.example.infrastructure.templating.usecases.CreateSchedulerUsecase;
 import com.bart.example.infrastructure.templating.ports.model.DependencyClasses;
 import com.bart.example.infrastructure.templating.ports.model.DispatchClasses;
 import com.bart.example.infrastructure.templating.ports.model.EndpointClasses;
@@ -21,7 +21,7 @@ public class TemplatingPort {
     private final CreateDependencyInjectorUsecase createDependencyInjectorUsecase = CreateDependencyInjectorUsecase.getInstance();
     private final CreateJsonWriterUsecase createJsonWriterUsecase = CreateJsonWriterUsecase.getInstance();
     private final CreateJsonReaderUsecase createJsonReaderUsecase = CreateJsonReaderUsecase.getInstance();
-    private final CreateSchedulerProcessorUsecase createSchedulerClassUsecase = CreateSchedulerProcessorUsecase.getInstance();
+    private final CreateSchedulerUsecase createSchedulerClassUsecase = CreateSchedulerUsecase.getInstance();
 
     public void generateEndpointClasses(EndpointClasses endpointClasses) {
         createEndpointClassesUsecase.execute(endpointClasses);
