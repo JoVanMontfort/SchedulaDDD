@@ -25,15 +25,26 @@ public class CreateSchedulerProcessorUsecase {
             = CreateSchedulerBootstrapCommand.getInstance();
 
     public void execute(RoundEnvironment roundEnv, Filer filer, Messager messager) {
+        // Check if dependencies are initialized
+        if (findAllScheduledMethodsQuery.getTypeUtils() == null) {
+            messager.printMessage(javax.tools.Diagnostic.Kind.ERROR,
+                    "TypeUtils not initialized in FindAllScheduledMethodsQuery");
+            return;
+        }
+
         List<ScheduledMethodInfo> scheduledMethods = findAllScheduledMethodsQuery.execute(roundEnv, messager);
         createSchedulerBootstrapCommand.execute(filer, scheduledMethods, messager);
     }
 
     public void setElementUtils(Elements elementUtils) {
-        findAllScheduledMethodsQuery.setElementUtils(elementUtils);
+        if (findAllScheduledMethodsQuery != null) {
+            findAllScheduledMethodsQuery.setElementUtils(elementUtils);
+        }
     }
 
     public void setTypeUtils(Types typeUtils) {
-        findAllScheduledMethodsQuery.setTypeUtils(typeUtils);
+        if (findAllScheduledMethodsQuery != null) {
+            findAllScheduledMethodsQuery.setTypeUtils(typeUtils);
+        }
     }
 }

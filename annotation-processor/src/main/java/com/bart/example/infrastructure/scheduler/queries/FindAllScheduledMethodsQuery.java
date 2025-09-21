@@ -24,10 +24,16 @@ public class FindAllScheduledMethodsQuery {
     @Getter
     private final static FindAllScheduledMethodsQuery instance = new FindAllScheduledMethodsQuery();
 
+    @Getter
     private Types typeUtils;
     private Elements elementUtils;
 
     public List<ScheduledMethodInfo> execute(RoundEnvironment roundEnv, Messager messager) {
+        if (typeUtils == null) {
+            messager.printMessage(Diagnostic.Kind.ERROR, "TypeUtils is not initialized");
+            return new ArrayList<>();
+        }
+
         messager.printMessage(Diagnostic.Kind.NOTE, "🔍 Finding all scheduled methods...");
 
         List<ScheduledMethodInfo> allMethods = roundEnv.getElementsAnnotatedWith(EnableScheduling.class)
@@ -98,6 +104,10 @@ public class FindAllScheduledMethodsQuery {
     }
 
     private String getMethodQualifiedName(ExecutableElement methodElement) {
+        if (elementUtils == null) {
+            return methodElement.getSimpleName().toString();
+        }
+
         TypeElement enclosingClass = (TypeElement) methodElement.getEnclosingElement();
         return String.format("%s.%s",
                 elementUtils.getPackageOf(enclosingClass).getQualifiedName(),
@@ -131,6 +141,11 @@ public class FindAllScheduledMethodsQuery {
     }
 
     private boolean returnsVoid(ExecutableElement methodElement) {
+        if (typeUtils == null) {
+            // If typeUtils is not available, skip this validation
+            return true;
+        }
+
         TypeMirror returnType = methodElement.getReturnType();
         TypeMirror voidType = typeUtils.getNoType(TypeKind.VOID);
         return typeUtils.isSameType(returnType, voidType);

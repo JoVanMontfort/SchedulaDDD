@@ -5,6 +5,8 @@ import com.bart.example.infrastructure.scheduler.usecases.CreateSchedulerProcess
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import java.util.Set;
 
@@ -17,12 +19,20 @@ public class SchedulerProcessor extends AbstractProcessor {
     private final CreateSchedulerProcessorUsecase createSchedulerProcessorUsecase = CreateSchedulerProcessorUsecase.getInstance();
     private Filer filer;
     private Messager messager;
+    private Elements elementUtils;
+    private Types typeUtils;
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         this.filer = processingEnv.getFiler();
         this.messager = processingEnv.getMessager();
+        this.elementUtils = processingEnv.getElementUtils();
+        this.typeUtils = processingEnv.getTypeUtils();
+
+        // Inject dependencies into the use case
+        createSchedulerProcessorUsecase.setElementUtils(elementUtils);
+        createSchedulerProcessorUsecase.setTypeUtils(typeUtils);
     }
 
     @Override
@@ -34,7 +44,6 @@ public class SchedulerProcessor extends AbstractProcessor {
         }
 
         createSchedulerProcessorUsecase.execute(roundEnv, filer, messager);
-
         return true;
     }
 }

@@ -1,0 +1,2 @@
+com.bart.example.infrastructure.injector.port.InjectorProcessorPort
+com.bart.example.infrastructure.scheduler.ports.SchedulerProcessor
