@@ -130,7 +130,7 @@ public class MakeSchedulerContentCommand {
             content.append("                },\n");
             content.append("                calculateInitialDelay(\"").append(scheduled.cron()).append("\"),\n");
             content.append("                calculatePeriod(\"").append(scheduled.cron()).append("\"),\n");
-            content.append("                TimeUnit.MILLISECONDS);\n");
+            content.append("                TimeUnit.MILLISECONDS);\n"); // FIXED: Added TimeUnit. prefix
             content.append("            scheduledTasks.add(").append(taskName).append(");\n");
         } else if (scheduled.fixedRate() > 0) {
             content.append("            ScheduledFuture<?> ").append(taskName).append(" = scheduler.scheduleAtFixedRate(\n");
@@ -143,7 +143,7 @@ public class MakeSchedulerContentCommand {
             content.append("                },\n");
             content.append("                ").append(scheduled.initialDelay()).append(",\n");
             content.append("                ").append(scheduled.fixedRate()).append(",\n");
-            content.append("                ").append(scheduled.timeUnit()).append(");\n");
+            content.append("                TimeUnit.").append(scheduled.timeUnit()).append(");\n"); // FIXED: Added TimeUnit. prefix
             content.append("            scheduledTasks.add(").append(taskName).append(");\n");
         } else if (scheduled.fixedDelay() > 0) {
             content.append("            ScheduledFuture<?> ").append(taskName).append(" = scheduler.scheduleWithFixedDelay(\n");
@@ -156,7 +156,7 @@ public class MakeSchedulerContentCommand {
             content.append("                },\n");
             content.append("                ").append(scheduled.initialDelay()).append(",\n");
             content.append("                ").append(scheduled.fixedDelay()).append(",\n");
-            content.append("                ").append(scheduled.timeUnit()).append(");\n");
+            content.append("                TimeUnit.").append(scheduled.timeUnit()).append(");\n"); // FIXED: Added TimeUnit. prefix
             content.append("            scheduledTasks.add(").append(taskName).append(");\n");
         }
         content.append("\n");
