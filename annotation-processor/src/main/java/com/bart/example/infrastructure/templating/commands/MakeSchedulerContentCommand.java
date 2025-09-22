@@ -31,7 +31,8 @@ public class MakeSchedulerContentCommand {
         content.append("public class ").append(schedulerClass.className()).append(" {\n\n");
 
         // Generate logger - using java.util.logging instead of SLF4J
-        content.append("    private static final Logger logger = Logger.getLogger(\"").append(schedulerClass.className()).append("\");\n\n");
+        content.append("    private static final Logger logger = Logger.getLogger(\"").append(schedulerClass.className()).append("\");\n");
+        content.append("    private static ").append(schedulerClass.className()).append(" instance;\n\n");
 
         // Generate executor service
         content.append("    private final ScheduledExecutorService scheduler;\n");
@@ -49,7 +50,26 @@ public class MakeSchedulerContentCommand {
         content.append("        this.target = target;\n");
         content.append("    }\n\n");
 
-        // Generate init method - remove @PostConstruct annotation
+        // Add static initializer block to auto-start the scheduler
+        content.append("    // Static initializer to auto-start the scheduler\n");
+        content.append("    static {\n");
+        content.append("        try {\n");
+        content.append("            instance = new ").append(schedulerClass.className()).append("();\n");
+        content.append("            instance.init();\n");
+        content.append("            logger.info(\"Scheduler auto-started successfully\");\n");
+        content.append("            \n");
+        content.append("            // Add shutdown hook\n");
+        content.append("            Runtime.getRuntime().addShutdownHook(new Thread(() -> {\n");
+        content.append("                if (instance != null) {\n");
+        content.append("                    instance.shutdown();\n");
+        content.append("                }\n");
+        content.append("            }));\n");
+        content.append("        } catch (Exception e) {\n");
+        content.append("            logger.severe(\"Failed to auto-start scheduler: \" + e.getMessage());\n");
+        content.append("        }\n");
+        content.append("    }\n\n");
+
+        // Generate init method
         content.append("    public void init() {\n");
         content.append("        logger.info(\"Initializing scheduler with \" + ").append(schedulerClass.scheduledMethods().size()).append(" + \" tasks\");\n");
         content.append("        try {\n");
@@ -66,7 +86,7 @@ public class MakeSchedulerContentCommand {
         content.append("        }\n");
         content.append("    }\n\n");
 
-        // Generate shutdown method - remove @PreDestroy annotation
+        // Generate shutdown method
         content.append("    public void shutdown() {\n");
         content.append("        logger.info(\"Shutting down scheduler\");\n");
         content.append("        scheduledTasks.forEach(task -> task.cancel(false));\n");
@@ -123,40 +143,46 @@ public class MakeSchedulerContentCommand {
             content.append("            ScheduledFuture<?> ").append(taskName).append(" = scheduler.scheduleAtFixedRate(\n");
             content.append("                () -> {\n");
             content.append("                    try {\n");
+            content.append("                        logger.info(\"Executing scheduled task: ").append(methodName).append("\");\n");
             content.append("                        target.").append(methodName).append("();\n");
+            content.append("                        logger.info(\"Completed scheduled task: ").append(methodName).append("\");\n");
             content.append("                    } catch (Exception e) {\n");
             content.append("                        logger.severe(\"Scheduled task '").append(methodName).append("' failed: \" + e.getMessage());\n");
             content.append("                    }\n");
             content.append("                },\n");
             content.append("                calculateInitialDelay(\"").append(scheduled.cron()).append("\"),\n");
             content.append("                calculatePeriod(\"").append(scheduled.cron()).append("\"),\n");
-            content.append("                TimeUnit.MILLISECONDS);\n"); // FIXED: Added TimeUnit. prefix
+            content.append("                TimeUnit.MILLISECONDS);\n");
             content.append("            scheduledTasks.add(").append(taskName).append(");\n");
         } else if (scheduled.fixedRate() > 0) {
             content.append("            ScheduledFuture<?> ").append(taskName).append(" = scheduler.scheduleAtFixedRate(\n");
             content.append("                () -> {\n");
             content.append("                    try {\n");
+            content.append("                        logger.info(\"Executing scheduled task: ").append(methodName).append("\");\n");
             content.append("                        target.").append(methodName).append("();\n");
+            content.append("                        logger.info(\"Completed scheduled task: ").append(methodName).append("\");\n");
             content.append("                    } catch (Exception e) {\n");
             content.append("                        logger.severe(\"Scheduled task '").append(methodName).append("' failed: \" + e.getMessage());\n");
             content.append("                    }\n");
             content.append("                },\n");
             content.append("                ").append(scheduled.initialDelay()).append(",\n");
             content.append("                ").append(scheduled.fixedRate()).append(",\n");
-            content.append("                TimeUnit.").append(scheduled.timeUnit()).append(");\n"); // FIXED: Added TimeUnit. prefix
+            content.append("                TimeUnit.").append(scheduled.timeUnit()).append(");\n");
             content.append("            scheduledTasks.add(").append(taskName).append(");\n");
         } else if (scheduled.fixedDelay() > 0) {
             content.append("            ScheduledFuture<?> ").append(taskName).append(" = scheduler.scheduleWithFixedDelay(\n");
             content.append("                () -> {\n");
             content.append("                    try {\n");
+            content.append("                        logger.info(\"Executing scheduled task: ").append(methodName).append("\");\n");
             content.append("                        target.").append(methodName).append("();\n");
+            content.append("                        logger.info(\"Completed scheduled task: ").append(methodName).append("\");\n");
             content.append("                    } catch (Exception e) {\n");
             content.append("                        logger.severe(\"Scheduled task '").append(methodName).append("' failed: \" + e.getMessage());\n");
             content.append("                    }\n");
             content.append("                },\n");
             content.append("                ").append(scheduled.initialDelay()).append(",\n");
             content.append("                ").append(scheduled.fixedDelay()).append(",\n");
-            content.append("                TimeUnit.").append(scheduled.timeUnit()).append(");\n"); // FIXED: Added TimeUnit. prefix
+            content.append("                TimeUnit.").append(scheduled.timeUnit()).append(");\n");
             content.append("            scheduledTasks.add(").append(taskName).append(");\n");
         }
         content.append("\n");
