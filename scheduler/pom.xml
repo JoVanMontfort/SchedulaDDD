@@ -27,7 +27,8 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
-                    <compilerArgument>-proc:full</compilerArgument>
+                    <proc>full</proc>
+                    <annotationProcessing>true</annotationProcessing>
                 </configuration>
             </plugin>
         </plugins>
